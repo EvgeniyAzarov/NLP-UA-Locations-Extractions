@@ -3,6 +3,7 @@ import pandas as pd
 import torch
 from pydantic import BaseModel
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
 from app.location_predictor import LocationPredictor
 from typing import List
@@ -18,7 +19,6 @@ class InputTexts(BaseModel):
 
 
 models = {}
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start-up: Load saved models
@@ -32,10 +32,25 @@ async def lifespan(app: FastAPI):
     del model
     torch.cuda.empty_cache()
 
-app = FastAPI(lifespan=lifespan)
+
+app = FastAPI(
+    title="NLP UA Locations extraction",
+    description="",
+    summary="Endpoint for locations extraction from the news and Telegram posts.",
+    version="0.0.1",
+    contact={
+        "name": "Yevhenii Azarov",
+        "email": "azarov.evg.ua@gmail.com",
+    },
+    lifespan=lifespan
+)
+
+@app.get("/")
+def docs_redirect():
+    return RedirectResponse("/docs")
 
 @app.post("/api/extract_locations/")
-async def predict_rating(input_texts: InputTexts):
+async def extract_locations(input_texts: InputTexts):
     texts = input_texts.texts
     locations = models['locations-extractor'].predict(texts)
     return locations 
