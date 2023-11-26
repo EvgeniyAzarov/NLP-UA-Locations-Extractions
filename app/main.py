@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
-from app.location_predictor import LocationPredictor
+from location_predictor import LocationPredictor
 from typing import List
 
 
