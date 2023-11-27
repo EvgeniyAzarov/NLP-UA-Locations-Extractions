@@ -6,7 +6,7 @@
 
 Url: [https://ua-locations-b257fnr7mq-uc.a.run.app](https://ua-locations-b257fnr7mq-uc.a.run.app) 
 
-The model is wrapped with simple REST API and deployed to the Google Cloud Platform. The API scheme can be found at the main page. Below is an example request with Python snippet.
+The model is wrapped with simple REST API and deployed to the Google Cloud Platform. The API scheme can be found at the main page. Below is a sample request with python to the api's endpoint.
 
 ```Python
 import requests
@@ -47,3 +47,7 @@ print(json.dumps(json.loads(response.text), indent=4, ensure_ascii=False))
 ```
 
 ## Build container
+
+## Model optimization
+
+Investigation on model's optimization via conversion to onnx format and quantization can be found at [notebooks/model_optimizations.ipynb](notebooks/model_optimizations.ipynb)
