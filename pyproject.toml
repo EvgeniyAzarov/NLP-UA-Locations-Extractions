@@ -21,6 +21,7 @@ emoji = "^2.8.0"
 onnx = "^1.15.0"
 onnxruntime = "^1.16.3"
 optimum = "^1.14.1"
+matplotlib = "^3.8.2"
 
 
 [build-system]
