@@ -5,6 +5,7 @@ from tqdm.auto import tqdm
 from transformers import AutoConfig, AutoModelForTokenClassification, pipeline
 from lingua import Language, LanguageDetectorBuilder
 from typing import List
+import emoji
 
 
 class LocationPredictor:
@@ -74,6 +75,13 @@ class LocationPredictor:
             return 'ru'
         else:
             return 'uk' if self.lang_detector.detect_language_of(text) == Language.UKRAINIAN else 'ru'
+    
+    def _contains_emoji(self, text):
+        for char in text:
+            if emoji.is_emoji(char):
+                return True
+        else:
+            return False
         
     def _extract_locations(self, text):
         text = self._remove_stoprows(text)
@@ -92,7 +100,7 @@ class LocationPredictor:
         ents = classifier(text)
         locs = []
         for ent in ents:
-            if ent['score'] >= threshold and "#" not in ent['word']:
+            if ent['score'] >= threshold and "#" not in ent['word'] and not self._contains_emoji(ent['word']):
                 word = text[ent['start']:ent['end']].split('\n')[0]
                 locs.append(word)
 

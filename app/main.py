@@ -5,13 +5,13 @@ from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from contextlib import asynccontextmanager
-from location_predictor import LocationPredictor
+from app.location_predictor import LocationPredictor
 from typing import List
 
 
-model_checkpoint_uk = "models/model-uk/checkpoint-14096/"
-model_checkpoint_ru = "models/model-ru/checkpoint-12500/"
-stoprows = "models/stoprows.json"
+model_checkpoint_uk = "app/models/model-uk/checkpoint-14096/"
+model_checkpoint_ru = "app/models/model-ru/checkpoint-12500/"
+stoprows = "app/models/stoprows.json"
 
 
 class InputTexts(BaseModel):
@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     )
     yield
     # Shutdown: free memory 
-    del model
+    models.clear()
     torch.cuda.empty_cache()
 
 
