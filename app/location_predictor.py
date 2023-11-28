@@ -1,8 +1,10 @@
 import json
 import re
 import itertools
+import pandas as pd
 from tqdm.auto import tqdm
-from transformers import AutoConfig, AutoModelForTokenClassification, pipeline
+from transformers import pipeline as pipeline_transformers
+from optimum.pipelines import pipeline as pipeline_onnx
 from lingua import Language, LanguageDetectorBuilder
 from typing import List
 import emoji
@@ -21,6 +23,7 @@ class LocationPredictor:
         thresh_uk: float = 0.9,
         thresh_ru: float = 0.6,
         device: str = 'cpu',
+        onnx: bool = False
     ):
         self.thresh_uk = thresh_uk
         self.thresh_ru = thresh_ru
@@ -28,6 +31,11 @@ class LocationPredictor:
         with open(stoprows_path, 'r') as stoprows_file:
             stoprows_dict = json.load(stoprows_file)
         self.stoprows = set(itertools.chain.from_iterable(stoprows_dict.values()))
+
+        if onnx:
+            pipeline = pipeline_onnx
+        else:
+            pipeline = pipeline_transformers
 
         self.classifier_uk = pipeline(
             'token-classification',
@@ -106,7 +114,21 @@ class LocationPredictor:
 
         return locs 
     
-    def predict(self, texts: List[str], verbose=False) -> List[List[str]]:
+    def _postprocess(self, texts, ents, threshold):
+        locations = []
+        for i, text in enumerate(texts):
+            locs = []
+            for ent in ents[i]:
+                if ent['score'] >= threshold \
+                    and "#" not in ent['word'] \
+                    and not self._contains_emoji(ent['word']):
+                    word = text[ent['start']:ent['end']].split('\n')[0]
+                    locs.append(word)
+            locations.append(locs)
+
+        return locations
+    
+    def predict(self, texts: List[str]) -> List[List[str]]:
         """
         Process texts input.
 
@@ -116,9 +138,23 @@ class LocationPredictor:
         Returns:
             List[List[str]]: list of lists of locations.
         """
+        df = pd.DataFrame(texts, columns=['text'])
+        df['text'] = df['text'].apply(self._remove_stoprows)
+        df['lang'] = df['text'].apply(self._detect_lang)
+        df_uk = df[df['lang'] == 'uk']
+        df_ru = df[df['lang'] == 'ru']
 
-        locations = []
-        for text in tqdm(texts, disable=(not verbose)):
-            locations.append(self._extract_locations(text))
+        locs_uk, locs_ru = [], []
 
-        return locations
+        if len(df_uk) > 0:
+            ents_uk = self.classifier_uk(df_uk['text'].to_list())
+            locs_uk = self._postprocess(df_uk['text'].to_list(), ents_uk, self.thresh_uk)
+
+        if len(df_ru) > 0:
+            ents_ru = self.classifier_ru(df_ru['text'].to_list())
+            locs_ru = self._postprocess(df_ru['text'].to_list(), ents_ru, self.thresh_ru)
+        
+        df.loc[df['lang'] == 'uk', "locations"] = pd.Series(locs_uk).values
+        df.loc[df['lang'] == 'ru', "locations"] = pd.Series(locs_ru).values
+
+        return df['locations'].to_list()

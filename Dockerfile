@@ -16,7 +16,7 @@ COPY --from=requirements-stage /tmp/requirements.txt /app/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
-COPY ./models /app/models
+COPY ./models/models_onnx/ /app/models/models_onnx/
 
 COPY ./app /app
 

@@ -9,9 +9,11 @@ from app.location_predictor import LocationPredictor
 from typing import List
 
 
-model_checkpoint_uk = "app/models/model-uk/checkpoint-14096/"
-model_checkpoint_ru = "app/models/model-ru/checkpoint-12500/"
-stoprows = "app/models/stoprows.json"
+# model_checkpoint_uk = "app/models/model-uk/checkpoint-14096/"
+# model_checkpoint_ru = "app/models/model-ru/checkpoint-12500/"
+model_checkpoint_uk = "app/models/models_onnx/model_uk_onnx_optimized/"
+model_checkpoint_ru = "app/models/models_onnx/model_ru_onnx/"
+stoprows = "app/models/models_onnx/stoprows.json"
 
 
 class InputTexts(BaseModel):
@@ -25,7 +27,8 @@ async def lifespan(app: FastAPI):
     models["locations-extractor"] = LocationPredictor(
         chekpoint_path_uk=model_checkpoint_uk,
         chekpoint_path_ru=model_checkpoint_ru,
-        stoprows_path=stoprows
+        stoprows_path=stoprows,
+        onnx=True
     )
     yield
     # Shutdown: free memory 
